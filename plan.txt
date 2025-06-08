@@ -1,0 +1,72 @@
+# DEFINE STUDY CASE TO DEV-READY SPECIFICATIONS
+
+Overview:
+Create a payslip generation system facilitating:
+1. Per-month payment
+2. Employee works a 9 to 5 job from Monday--Friday
+3. Takehome pay is prorated based on their attendance
+4. Employee can propose overtime, which are paid double the rate
+5. Employee can propose reimbursement, which will be included in the payslip
+6. Point 4 and 5 contribute to employee's takehome pay
+
+API endpoints:
+
+1. Admin create start and end periods for a payroll.
+
+2. Employee submit attendance
+
+Validation rules:
+* Check-in can be done anytime in a day # assuming user work 9 to 5, check-in should counts as at 9.
+                                        # regardless of when they do it, it always counts as starting at 9.
+                                        # accountability is enforced that the attendance is unique to their respective day.
+* Multiple submissions in one day count as one # this might need data matching on date, not time.
+* Submissions can't be done on weekend # self-explanatory
+
+3. Employee submit overtime
+
+Validation rules:
+* Overtime must be proposed after employee done working # probably after 5 pm if we assume their worktime is faithful
+                                                        # use timestamp to validate
+* Ovetime hours is specified # need backtrack validation as it would not make sense to submit overtime before the work is done
+* Overtime cannot be more than 3 hours per day
+* Overtime can be taken any day # I assume including weekends
+
+4. Employee submit reimbursement
+
+# This one is not really a validation rule, but only input spec
+* Attach reimbursement amount
+* Attach reimbursement description
+
+5. Admin run payroll
+
+Validation rule:
+* Payroll is run once per payroll period
+* Once payroll is run, attendance, overtime, and reimbursement records from that period cannot affect the payslip.
+# not sure about the last req. I think it means that payroll generates payslip and any change on that period doesn't affect the payslip
+# for now, I'll just assume we have frozen payslip which is generated from the latest payroll, or a certain selected period.
+
+6. Employee generate payslip
+
+# Another breakdown
+* Contains attendance and how they affect the salary
+* Contains overtime and how much the multiplication
+* Contains lists of reimbursement
+* Contains total takehome pay
+
+7. Admin generate payslips summary
+
+# breakdown
+* Contains employee data and their takehome pay
+* Contains total takehome pay
+
+Technical requirements
+* Main database uses PostgresSQL # does this imply non-main databases can exist?
+* Handle API via HTTP using JSON # probably RESTful or other frameworks
+* Implement testing for all functionality
+* Provide full documentation on API usage and software architecture
+* Provide performance scalability
+* Track each record creation using created_at and updated_at
+* Store IP address for requests for audit purposes
+* Maintain audit log table
+* Include request_d in logs for request tracing
+* Track user action with created_by and updated_by
