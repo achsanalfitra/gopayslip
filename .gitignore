@@ -17,6 +17,7 @@
 # Go modules
 /go.sum
 /go.work.sum
+go.sum
 
 # IDE related
 .vscode/
