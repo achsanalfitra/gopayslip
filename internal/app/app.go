@@ -2,6 +2,7 @@ package app
 
 import (
 	"database/sql"
+	"os"
 
 	"github.com/achsanalfitra/gopayslip/cmd/depsconfig"
 )
@@ -9,8 +10,11 @@ import (
 // app-wide key consistency
 type DBKey string
 
-const (
-	PQ DBKey = "PostgresSQL"
+// InitDB precedes this, so this is never empty string because the error is catch earlier
+var postgresKey DBKey = DBKey(os.Getenv("POSTGRES_DB"))
+
+var (
+	PQ DBKey = postgresKey
 	// insert other databases here
 )
 
