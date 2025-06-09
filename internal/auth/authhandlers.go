@@ -1,5 +1,14 @@
 package auth
 
+import (
+	"encoding/json"
+	"errors"
+	"log"
+	"net/http"
+
+	"github.com/achsanalfitra/gopayslip/internal/app"
+)
+
 // type User struct {
 // 	ID       int    `json:"id"`
 // 	Username string `json:"user"`
@@ -7,12 +16,68 @@ package auth
 // 	Role     string `json:"role"`
 // }
 
-type AuthHandler struct {
-	AuthService AuthService
+type LoginRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+	Role     string `json:"role"`
 }
 
-func NewAuthHandler(svc AuthService) *AuthHandler {
+type LoginResponse struct {
+	Message string `json:"message"`
+	// Access  string `json:"access"` // use it when tokenizer is already online
+	// Refresh string `json:"refresh"`
+}
+
+type ErrorResponse struct {
+	Error string `json:"error"`
+}
+
+type AuthHandler struct {
+	AuthService AuthService
+	App         *app.App
+}
+
+func NewAuthHandler(svc AuthService, a *app.App) *AuthHandler {
 	return &AuthHandler{
 		AuthService: svc,
+		App:         a,
 	}
+}
+
+func (ah *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
+	// decode body to json
+	var req LoginRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(ErrorResponse{Error: "invalid request body"})
+		return
+	}
+
+	// inject DB
+	newCtx := app.InjectDB(r.Context(), ah.App)
+
+	// update context with injected DB
+	r = r.WithContext(newCtx)
+
+	// run login service
+	err := ah.AuthService.Login(req.Username, req.Password, req.Role, r.Context())
+	if err != nil {
+		// check for unauthorized
+		if errors.Is(err, errors.New("user not found")) || errors.Is(err, errors.New("invalid password")) {
+			log.Printf("internal server error during login for user %s: %v", req.Username, err)
+			w.WriteHeader(http.StatusUnauthorized)
+			json.NewEncoder(w).Encode(ErrorResponse{Error: "invalid username/password"})
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(ErrorResponse{Error: "an unexpected error occured"})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(LoginResponse{Message: "login succesful"})
 }
