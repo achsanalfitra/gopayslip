@@ -1,9 +1,11 @@
-package internal
+package auth
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 
+	"github.com/achsanalfitra/gopayslip/internal/app"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -21,10 +23,12 @@ type Auth interface {
 	AllowAccess() (user string, err error)
 }
 
-func (a *App) Login(user, pass, role string) error {
+func Login(user, pass, role string, ctx context.Context) error {
 	var hashedPassword string
 
-	err := a.DB.QueryRow("SELECT password FROM users WHERE username=$1 and role=$2", user, role).Scan(&hashedPassword)
+	db := app.GetDB(ctx)
+
+	err := db.QueryRow("SELECT password FROM users WHERE username=$1 and role=$2", user, role).Scan(&hashedPassword)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return errors.New("user not found")
