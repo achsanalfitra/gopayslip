@@ -1,33 +1,39 @@
 package app
 
 import (
-	"context"
 	"database/sql"
+
+	"github.com/achsanalfitra/gopayslip/cmd/depsconfig"
 )
 
-// config
-type ctxKey string
+// app-wide key consistency
+type DBKey string
 
-const dbKey ctxKey = "db"
+const (
+	PQ DBKey = "PostgresSQL"
+	// insert other databases here
+)
+
+type AppConfig struct {
+	DB     *sql.DB
+	Server *depsconfig.Server
+}
 
 // create App for dependency injection
 type App struct {
-	DB *sql.DB
+	DB     *sql.DB
+	Server *depsconfig.Server
+	// declare other app-dependencies here
 }
 
-func NewApp(db *sql.DB) *App {
+func NewApp(cfg AppConfig) *App {
 	return &App{
-		DB: db,
+		DB:     cfg.DB,
+		Server: cfg.Server,
+		// don't forget to instantiate them
 	}
 }
 
-func InjectDB(ctx context.Context, a *App) context.Context {
-	return context.WithValue(ctx, dbKey, a.DB)
-}
-
-func GetDB(ctx context.Context) *sql.DB {
-	if db, ok := ctx.Value(dbKey).(*sql.DB); ok {
-		return db
-	}
-	panic("database not found") // development error
+func (a *App) Run() {
+	a.Server.Start()
 }

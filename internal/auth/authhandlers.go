@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"log"
@@ -8,13 +9,6 @@ import (
 
 	"github.com/achsanalfitra/gopayslip/internal/app"
 )
-
-// type User struct {
-// 	ID       int    `json:"id"`
-// 	Username string `json:"user"`
-// 	Password string `json:"pass"`
-// 	Role     string `json:"role"`
-// }
 
 type LoginRequest struct {
 	Username string `json:"username"`
@@ -55,7 +49,7 @@ func (ah *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// inject DB
-	newCtx := app.InjectDB(r.Context(), ah.App)
+	newCtx := context.WithValue(r.Context(), app.PQ, ah.App.DB)
 
 	// update context with injected DB
 	r = r.WithContext(newCtx)

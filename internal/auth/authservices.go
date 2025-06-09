@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 
+	"github.com/achsanalfitra/gopayslip/hlp"
 	"github.com/achsanalfitra/gopayslip/internal/app"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -17,9 +18,13 @@ type AuthService interface {
 func Login(user, pass, role string, ctx context.Context) error {
 	var hashedPassword string
 
-	db := app.GetDB(ctx)
+	// connect to database
+	db, err := hlp.GetDB(ctx, app.PQ)
+	if err != nil {
+		return err
+	}
 
-	err := db.QueryRowContext(ctx, "SELECT password FROM users WHERE username=$1 and role=$2", user, role).Scan(&hashedPassword)
+	err = db.QueryRowContext(ctx, "SELECT password FROM users WHERE username=$1 and role=$2", user, role).Scan(&hashedPassword)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return errors.New("user not found")
@@ -35,11 +40,15 @@ func Login(user, pass, role string, ctx context.Context) error {
 }
 
 func Register(user, pass, role string, ctx context.Context) error {
-	db := app.GetDB(ctx)
+	// connect to database
+	db, err := hlp.GetDB(ctx, app.PQ)
+	if err != nil {
+		return err
+	}
 
 	// check if user already exists, this early exit increases performance
 	var existingUser string
-	err := db.QueryRowContext(ctx, "SELECT username FROM users WHERE username=$1 and role=$2", user, role).Scan(&existingUser)
+	err = db.QueryRowContext(ctx, "SELECT username FROM users WHERE username=$1 and role=$2", user, role).Scan(&existingUser)
 	if err == nil {
 		return errors.New("user already exists")
 	}
