@@ -1,0 +1,49 @@
+# Go build
+/bin/
+/build/
+/*.exe
+/*.exe-
+/*.dll
+/*.so
+/*.dylib
+*.test
+
+# Go workspace
+*.out
+*.log
+*.tmp
+*.swp
+
+# Go modules
+/go.sum
+/go.work.sum
+
+# IDE related
+.vscode/
+.idea/
+*.iml
+
+# OS-related
+.DS_Store
+Thumbs.dylib
+
+# environment files
+.env
+
+# Docker
+*.pid
+docker-compose.override.yml
+pgdata/
+pg_dump.sql
+
+# PostgreSQL
+*.sql-
+*.sql-journal
+
+# logs
+logs/
+*.log
+
+# test coverage
+coverage.*
+*.coverprofile
