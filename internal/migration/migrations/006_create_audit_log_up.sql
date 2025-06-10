@@ -11,9 +11,6 @@ CREATE TABLE IF NOT EXISTS audit_log (
     event_type VARCHAR(255) NOT NULL,
     action_type action_type NOT NULL,
     affected_table VARCHAR(255) NOT NULL,
-    -- This column stores the ID of the record that was affected.
-    -- It's a logical foreign key (not a strict SQL FOREIGN KEY constraint)
-    -- because it can refer to records in different tables.
     affected_record_id BIGINT,
     created_by BIGINT NOT NULL,
     ip_address VARCHAR(255),
