@@ -24,7 +24,7 @@ func Login(user, pass, role string, ctx context.Context) error {
 		return err
 	}
 
-	err = db.QueryRowContext(ctx, "SELECT password FROM users WHERE username=$1 and role=$2", user, role).Scan(&hashedPassword)
+	err = db.QueryRowContext(ctx, "SELECT password FROM users WHERE username=$1 and user_role=$2", user, role).Scan(&hashedPassword)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return errors.New("user not found")
