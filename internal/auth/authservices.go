@@ -12,7 +12,7 @@ import (
 
 type AuthService interface {
 	Login(user, pass, role string, ctx context.Context) error
-	Register(user, pass, role string, ctx context.Context) error
+	Register(user, pass, role, salary string, ctx context.Context) error
 }
 
 func Login(user, pass, role string, ctx context.Context) error {
@@ -39,7 +39,7 @@ func Login(user, pass, role string, ctx context.Context) error {
 	return nil
 }
 
-func Register(user, pass, role string, ctx context.Context) error {
+func Register(user, pass, role, salary string, ctx context.Context) error {
 	// connect to database
 	db, err := hlp.GetDB(ctx, app.PQ)
 	if err != nil {
