@@ -4,9 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"time"
 
 	"github.com/achsanalfitra/gopayslip/hlp"
 	"github.com/achsanalfitra/gopayslip/internal/app"
+	"github.com/achsanalfitra/gopayslip/internal/model"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -47,14 +49,13 @@ func Register(user, pass, role string, salary float64, ctx context.Context) erro
 	}
 
 	// check if user already exists, this early exit increases performance
-	var existingUser string
-	err = db.QueryRowContext(ctx, "SELECT username FROM users WHERE username=$1 and role=$2", user, role).Scan(&existingUser)
+	var tempID int64
+	err = db.QueryRowContext(ctx, "SELECT id FROM users WHERE username=$1", user).Scan(&tempID)
 	if err == nil {
 		return errors.New("user already exists")
 	}
-
-	if errors.Is(err, sql.ErrNoRows) {
-		return err
+	if !errors.Is(err, sql.ErrNoRows) {
+		return errors.New("database query error")
 	}
 
 	hashedPasswordBytes, err := bcrypt.GenerateFromPassword([]byte(pass), bcrypt.DefaultCost)
@@ -64,9 +65,47 @@ func Register(user, pass, role string, salary float64, ctx context.Context) erro
 
 	hashedPassword := string(hashedPasswordBytes)
 
-	_, err = db.ExecContext(ctx, "INSERT INTO users (username, password, user_role) VALUES ($1, $2, $3, $4)", user, hashedPassword, role, salary)
+	// this services asks the whole model
+
+	// populate the data
+	createdAt := time.Now()
+
+	var initialCreatedUpdatedBy int64 = 0
+
+	userToInsert := model.User{
+		Username:  user,
+		Password:  hashedPassword,
+		UserRole:  model.Role(role),
+		Salary:    salary,
+		CreatedAt: createdAt,
+		UpdatedAt: createdAt,
+		CreatedBy: initialCreatedUpdatedBy, // initial placeholder
+		UpdatedBy: initialCreatedUpdatedBy,
+	}
+
+	insertQuery := `INSERT INTO users (username, password, user_role, salary, created_at, updated_at, created_by, updated_by)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`
+
+	var newUserID int64
+	err = db.QueryRowContext(
+		ctx, insertQuery,
+		userToInsert.Username,
+		userToInsert.Password,
+		userToInsert.UserRole,
+		userToInsert.Salary,
+		userToInsert.CreatedAt,
+		userToInsert.UpdatedAt,
+		userToInsert.CreatedBy,
+		userToInsert.UpdatedBy,
+	).Scan(&newUserID)
+
 	if err != nil {
-		return errors.New("failed to register user")
+		return errors.New("failed to insert user")
+	}
+
+	_, err = db.ExecContext(ctx, "UPDATE users SET created_by=$1, updated_by=$1 WHERE id=$2", newUserID, newUserID)
+	if err != nil {
+		return errors.New("failed to update created_by/updated_by for new user")
 	}
 
 	return nil
