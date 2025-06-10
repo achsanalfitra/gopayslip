@@ -1,4 +1,4 @@
-package depsconfig
+package config
 
 import (
 	"database/sql"

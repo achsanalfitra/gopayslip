@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"os"
 
-	"github.com/achsanalfitra/gopayslip/cmd/depsconfig"
+	"github.com/achsanalfitra/gopayslip/internal/config"
 )
 
 // app-wide key consistency
@@ -20,13 +20,13 @@ var (
 
 type AppConfig struct {
 	DB     *sql.DB
-	Server *depsconfig.Server
+	Server *config.Server
 }
 
 // create App for dependency injection
 type App struct {
 	DB     *sql.DB
-	Server *depsconfig.Server
+	Server *config.Server
 	// declare other app-dependencies here
 }
 
