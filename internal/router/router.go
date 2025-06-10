@@ -4,15 +4,24 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+
+	"github.com/achsanalfitra/gopayslip/internal/auth"
 )
 
+// configure public path
+var publicPath = map[string]bool{
+	"/api/": true,
+}
+
 type Router struct {
-	Route map[string]map[string]http.HandlerFunc // format -> path: {method: http.HandlerFunc}
+	Route     map[string]map[string]http.HandlerFunc // format -> path: {method: http.HandlerFunc}
+	Tokenizer *auth.Tokenizer
 }
 
 func NewRouter() *Router {
 	return &Router{
-		Route: make(map[string]map[string]http.HandlerFunc),
+		Route:     make(map[string]map[string]http.HandlerFunc),
+		Tokenizer: auth.NewTokenizer(),
 	}
 }
 
@@ -36,6 +45,19 @@ func (r *Router) RegisterRoute(method, path string, handler http.HandlerFunc) er
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	path := req.URL.Path
 	method := req.Method
+
+	if !publicPath[path] {
+		// parse header, look for Authorization
+		access, err := r.Tokenizer.ReadToken(req)
+		if err != nil {
+			http.Error(w, "bad authorization header", http.StatusUnauthorized)
+			return
+		}
+		if err := r.Tokenizer.AuthorizeToken(access); err != nil {
+			http.Error(w, "token unauthorized", http.StatusUnauthorized)
+			return
+		}
+	}
 
 	// check path existence
 	if _, exists := r.Route[path]; !exists {

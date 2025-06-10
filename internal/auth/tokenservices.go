@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"net/http"
 	"sync"
 	"time"
 )
@@ -134,6 +135,23 @@ func (t *Tokenizer) RefreshToken(oldRefreshToken string) (Access, Refresh string
 	delete(t.refreshExpiry, oldRefreshToken)
 
 	return t.GenerateToken(user)
+}
+
+func (t *Tokenizer) ReadToken(req *http.Request) (string, error) {
+	authHeader := req.Header.Get("Authorization")
+
+	if authHeader == "" {
+		return "", errors.New("header requiers Authorization")
+	}
+
+	var access string
+	if len(authHeader) > 7 && authHeader[:7] == "Bearer " {
+		access = authHeader[7:]
+	} else {
+		return "", errors.New("invalid Authorization header format")
+	}
+
+	return access, nil
 }
 
 // helper for GenerateToken
