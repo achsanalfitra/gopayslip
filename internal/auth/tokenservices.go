@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"sync"
 	"time"
 )
 
@@ -19,6 +20,7 @@ const (
 
 // this has to be instantiated because it stores the token data)
 type Tokenizer struct {
+	mu                sync.RWMutex
 	userRefreshTokens map[string]string
 	accessToUser      map[string]string
 	refreshToUser     map[string]string
@@ -28,6 +30,9 @@ type Tokenizer struct {
 
 func NewTokenizer() *Tokenizer {
 	return &Tokenizer{
+		mu:                sync.RWMutex{},
+		accessToUser:      make(map[string]string),
+		refreshToUser:     make(map[string]string),
 		userRefreshTokens: make(map[string]string),
 		accessExpiry:      make(map[string]time.Time),
 		refreshExpiry:     make(map[string]time.Time),
@@ -35,6 +40,10 @@ func NewTokenizer() *Tokenizer {
 }
 
 func (t *Tokenizer) GenerateToken(user string) (Access, Refresh string, err error) {
+	// lock write
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
 	accessBytes, err := t.generateRandomBytes(tokenLength)
 	if err != nil {
 		return "", "", errors.New("failed to generate access token bytes")
@@ -61,6 +70,10 @@ func (t *Tokenizer) GenerateToken(user string) (Access, Refresh string, err erro
 }
 
 func (t *Tokenizer) AuthorizeToken(access string) error {
+	// lock read
+	t.mu.RLock()
+	defer t.mu.Unlock()
+
 	// get user
 	user, ok := t.accessToUser[access]
 	if !ok {
@@ -92,6 +105,10 @@ func (t *Tokenizer) AuthorizeToken(access string) error {
 }
 
 func (t *Tokenizer) RefreshToken(oldRefreshToken string) (Access, Refresh string, err error) {
+	// lock read
+	t.mu.RLock()
+	defer t.mu.Unlock()
+
 	// get user
 	user, ok := t.refreshToUser[oldRefreshToken]
 	if !ok {
