@@ -4,10 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/achsanalfitra/gopayslip/internal/app"
+	"github.com/achsanalfitra/gopayslip/internal/model"
 )
 
 type LoginRequest struct {
@@ -20,6 +22,17 @@ type LoginResponse struct {
 	// Message string `json:"message"` // for testing only <----
 	Access  string `json:"access"` // use it when tokenizer is already online
 	Refresh string `json:"refresh"`
+}
+
+type RegisterRequest struct {
+	Salary   float64    `json:"salary"`
+	Username string     `json:"username"`
+	Password string     `json:"password"`
+	UserRole model.Role `json:"user_role"`
+}
+
+type RegisterResponse struct {
+	Message string `json:"message"`
 }
 
 type ErrorResponse struct {
@@ -88,7 +101,7 @@ func (ah *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 func (ah *AuthHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	// decode body to json
-	var req LoginRequest
+	var req RegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
@@ -102,14 +115,13 @@ func (ah *AuthHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	// update context with injected DB
 	r = r.WithContext(newCtx)
 
-	// run login service
-	err := ah.AuthService.Login(req.Username, req.Password, req.Role, r.Context())
+	// run register service
+	err := ah.AuthService.Register(req.Username, req.Password, string(req.UserRole), req.Salary, r.Context())
 	if err != nil {
-		// check for unauthorized
-		if errors.Is(err, errors.New("user not found")) || errors.Is(err, errors.New("invalid password")) {
-			log.Printf("internal server error during login for user %s: %v", req.Username, err)
+		// check if user already exists
+		if errors.Is(err, errors.New("user already exists")) {
 			w.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(w).Encode(ErrorResponse{Error: "invalid username/password"})
+			json.NewEncoder(w).Encode(ErrorResponse{Error: "user already exists"})
 			return
 		}
 
@@ -119,15 +131,8 @@ func (ah *AuthHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// get token
-	access, refresh, err := ah.Tokenizer.GenerateToken(req.Username)
-	if err != nil {
-		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(ErrorResponse{Error: "failed to generate token"})
-		return
-	}
-
+	message := fmt.Sprintf("registration for %s is succesful", req.Username)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(LoginResponse{Access: access, Refresh: refresh})
+	json.NewEncoder(w).Encode(RegisterResponse{Message: message})
 }

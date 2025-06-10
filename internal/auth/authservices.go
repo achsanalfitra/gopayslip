@@ -12,7 +12,7 @@ import (
 
 type AuthService interface {
 	Login(user, pass, role string, ctx context.Context) error
-	Register(user, pass, role, salary string, ctx context.Context) error
+	Register(user, pass, role string, salary float64, ctx context.Context) error
 }
 
 func Login(user, pass, role string, ctx context.Context) error {
@@ -39,7 +39,7 @@ func Login(user, pass, role string, ctx context.Context) error {
 	return nil
 }
 
-func Register(user, pass, role, salary string, ctx context.Context) error {
+func Register(user, pass, role string, salary float64, ctx context.Context) error {
 	// connect to database
 	db, err := hlp.GetDB(ctx, app.PQ)
 	if err != nil {
@@ -64,7 +64,7 @@ func Register(user, pass, role, salary string, ctx context.Context) error {
 
 	hashedPassword := string(hashedPasswordBytes)
 
-	_, err = db.ExecContext(ctx, "INSERT INTO users (username, password, role) VALUES ($1, $2, $3)", user, hashedPassword, role)
+	_, err = db.ExecContext(ctx, "INSERT INTO users (username, password, user_role) VALUES ($1, $2, $3, $4)", user, hashedPassword, role, salary)
 	if err != nil {
 		return errors.New("failed to register user")
 	}
