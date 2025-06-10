@@ -20,6 +20,8 @@ const (
 // this has to be instantiated because it stores the token data)
 type Tokenizer struct {
 	userRefreshTokens map[string]string
+	accessToUser      map[string]string
+	refreshToUser     map[string]string
 	accessExpiry      map[string]time.Time
 	refreshExpiry     map[string]time.Time
 }
@@ -52,19 +54,26 @@ func (t *Tokenizer) GenerateToken(user string) (Access, Refresh string, err erro
 	t.accessExpiry[Access] = time.Now().Add(accessTTL)
 	t.refreshExpiry[Refresh] = time.Now().Add(refreshTTL)
 
+	t.accessToUser[Access] = user
+	t.refreshToUser[Refresh] = user
+
 	return Access, Refresh, nil
 }
 
-func (t *Tokenizer) AuthorizeToken(user, access string) error {
+func (t *Tokenizer) AuthorizeToken(access string) error {
+	// get user
+	user, ok := t.accessToUser[access]
+	if !ok {
+		return errors.New("no access token for this user")
+	}
+
 	refresh, ok := t.userRefreshTokens[user]
 	if !ok {
 		return errors.New("no active session")
 	}
 
-	expiry, ok := t.accessExpiry[access]
-	if !ok {
-		return errors.New("no access token for this user")
-	}
+	// no need to check error because its already caught earlier
+	expiry := t.accessExpiry[access]
 
 	if time.Now().After(expiry) {
 		return errors.New("token expired")
@@ -82,16 +91,20 @@ func (t *Tokenizer) AuthorizeToken(user, access string) error {
 	return nil
 }
 
-func (t *Tokenizer) RefreshToken(user, oldRefreshToken string) (Access, Refresh string, err error) {
+func (t *Tokenizer) RefreshToken(oldRefreshToken string) (Access, Refresh string, err error) {
+	// get user
+	user, ok := t.refreshToUser[oldRefreshToken]
+	if !ok {
+		return "", "", errors.New("refresh token expiry not found")
+	}
+
 	refresh, ok := t.userRefreshTokens[user]
 	if !ok || refresh != oldRefreshToken {
 		return "", "", errors.New("invalid refresh token")
 	}
 
-	expiry, ok := t.refreshExpiry[oldRefreshToken]
-	if !ok {
-		return "", "", errors.New("refresh token expiry not found")
-	}
+	// this is never error because it is caught earlier
+	expiry := t.refreshExpiry[oldRefreshToken]
 
 	if time.Now().After(expiry) {
 		// delete expired sessions
