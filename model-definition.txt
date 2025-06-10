@@ -1,0 +1,90 @@
+# MODEL DEFINITION FOR THE STUDY CASE
+
+1. users table, static, changes relatively slow
+
+{
+    id: incremental
+    user: varchar[255]
+    password: varchar[255]
+    role: ENUM(EMPLOYEE, ADMIN)
+    salary: decimal(20,2)
+    created_at: timestamp
+    updated_at: timestamp
+    created_by: varchar[255] # who created the record
+    updated_by: varchar[255] # dynamic, can change depending on who did it
+}
+
+2. attendance table, change fast
+
+{
+    id: incremental
+    request_id: uuid
+    user: FK to user.id
+    role: ENUM(EMPLOYEE, ADMIN)
+    created_at: timestamp
+    updated_at: timestamp
+    created_by: FK to user.id
+    updated_by: FK to user.id
+}
+
+3. reimbursement table, change fast
+
+{
+    id: incremental
+    request_id: uuid
+    user: FK to user.id
+    role: ENUM(EMPLOYEE, ADMIN)
+    reimbursement: decimal(20, 2)
+    description: TEXT
+    created_at: timestamp
+    updated_at: timestamp
+    created_by: FK to user.id
+    updated_by: FK to user.id
+}
+
+4. overtime table, change fast
+
+{
+    id: incremental
+    request_id: uuid
+    user: FK to user.id
+    role: ENUM(EMPLOYEE, ADMIN)
+    overtime_duration: interval
+    created_at: timestamp
+    updated_at: timestamp
+    created_by: FK to user.id
+    updated_by: FK to user.id
+}
+
+5. payroll table, slowly changes
+
+{
+    id: incremmental
+    start_period: timestamp // refer to when it is created
+    end_period: timestamp
+    created_at: timestamp
+    updated_at: timestamp
+    created_by: FK to user.id
+    updated_by: FK to user.id
+}
+
+6. audit log
+
+{
+    id: incremmental
+    request_id: uuid (same as in reimbursement and attendance)
+    created_at: timestamp
+    event_type: varchat[255] # enum happens inside the model, not here
+    action_type: ENUM(CREATE, UPDATE, READ, DELETE)
+    affected_table: varchar[255] # in list form
+    affected_record_id: FK to affected_table.id
+    created_by: FK to user.id
+    ip_address: varchar[255]
+    old_data: TEXT # for update purposes
+    new_data: TEXT # for update purposes
+
+    # no updated_by, this is unchangeable record
+}
+
+# SYSTEM table
+

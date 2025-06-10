@@ -88,7 +88,7 @@ func (m *Migrate) Up() error {
 			return fmt.Errorf("can't execute the statement in %s", name)
 		}
 
-		if _, err := tx.Exec("INSERT INTO schema_migration (schema, created_at) VALUE ($1, $2)", name, time.Now()); err != nil {
+		if _, err := tx.Exec("INSERT INTO schema_migration (schema, created_at) VALUES ($1, $2)", name, time.Now()); err != nil {
 			return fmt.Errorf("can't insert %s into schema migration", name)
 		}
 	}

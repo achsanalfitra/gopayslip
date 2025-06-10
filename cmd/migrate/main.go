@@ -13,6 +13,10 @@ func main() {
 		log.Fatal(err)
 	}
 
+	if err := db.DB.Ping(); err != nil {
+		log.Fatalf("can't connect to database: %s", err)
+	}
+
 	// for demo project, we will only demosntrate the UP function
 	m := migration.NewMigration(
 		string(migration.UP),

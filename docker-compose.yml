@@ -11,11 +11,9 @@ services:
       - .env
     ports:
       - "${POSTGRES_PORT}:5432"
+    hostname: localhost
+    container_name: postgres-db
     volumes:
-      - pgdata:var/lib/postgresql/data
-    hostname: postgres-db
-  
-  volumes:
-    pgdata:
-    
-      
+      - pgdata:/var/lib/postgresql/data
+volumes:
+  pgdata:
