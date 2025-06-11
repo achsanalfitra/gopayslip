@@ -12,8 +12,8 @@ type Overtime struct {
 	CreatedBy int64         `json:"created_by"`
 	UpdatedBy int64         `json:"updated_by"`
 	RequestId uuid.UUID     `json:"request_id"`
-	UserRole  Role          `json:"user_role"`
-	Interval  time.Duration `json:"duration"`
+	Interval  time.Duration `json:"overtime_duration"`
+	Date      time.Time     `json:"overtime_date"`
 	CreatedAt time.Time     `json:"created_at"`
 	UpdatedAt time.Time     `json:"updated_at"`
 }
