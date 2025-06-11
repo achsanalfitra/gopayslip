@@ -128,6 +128,8 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		currentCtx = context.WithValue(currentCtx, CtxEndKey, r.a.InitStates[string(CtxEndKey)])
 		r.mu.Unlock()
 
+		// TODO: implement freeze for POST methods based on dates
+
 		newRequestId := uuid.New()
 		currentCtx = context.WithValue(currentCtx, CtxRequestKey, newRequestId)
 		currentCtx = context.WithValue(currentCtx, CtxUserKey, userID)

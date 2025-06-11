@@ -1,0 +1,7 @@
+# PostgreSQL env
+POSTGRES_USER=89023ujdoiwnfrd
+POSTGRES_PASSWORD=sakfa38j8ah
+POSTGRES_DB=siofdjaoajfshfa
+POSTGRES_PORT=5432
+POSTGRES_HOST=localhost
+SSLMODE=disable
