@@ -5,6 +5,7 @@ import (
 )
 
 type Payroll struct {
+	IsRun       bool      `json:"is_run"`
 	ID          int64     `json:"id"`
 	CreatedBy   int64     `json:"created_by"`
 	UpdatedBy   int64     `json:"updated_by"`
