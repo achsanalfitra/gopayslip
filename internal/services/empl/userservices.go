@@ -137,3 +137,45 @@ func ProposeOvertime(userID int64, requestID uuid.UUID, overtimeDuration time.Du
 
 	return nil
 }
+
+func ProposeReimbursement(userID int64, requestID uuid.UUID, amount float64, desc string, ctx context.Context) error {
+	// invalidate minus amount, fail fast
+	if amount <= 0 {
+		return errors.New("reimbursement can't be smaller than 0")
+	}
+
+	db, err := hlp.GetDB(ctx, app.PQ)
+	if err != nil {
+		return err
+	}
+
+	// post the whole payload immediately
+	reimbursementPayload := model.Reimbursement{
+		UserID:              userID,
+		CreatedBy:           userID,
+		UpdatedBy:           userID,
+		ReimbursementAmount: amount,
+		RequestId:           requestID,
+		Description:         desc,
+		CreatedAt:           time.Now(),
+		UpdatedAt:           time.Now(),
+	}
+
+	insertQuery := `INSERT INTO reimbursements (user_id, created_by, updated_by, amount, request_id, description, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
+	_, err = db.ExecContext(ctx, insertQuery,
+		reimbursementPayload.UserID,
+		reimbursementPayload.CreatedBy,
+		reimbursementPayload.UpdatedBy,
+		reimbursementPayload.ReimbursementAmount,
+		reimbursementPayload.RequestId,
+		reimbursementPayload.Description,
+		reimbursementPayload.CreatedAt,
+		reimbursementPayload.UpdatedAt,
+	)
+	if err != nil {
+		return errors.New("failed to insert reimbursement record")
+	}
+
+	return nil
+
+}

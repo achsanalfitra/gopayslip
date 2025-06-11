@@ -2,7 +2,6 @@ CREATE TABLE IF NOT EXISTS reimbursement (
     id BIGSERIAL PRIMARY KEY,
     request_id UUID NOT NULL UNIQUE,
     user_id BIGINT NOT NULL,
-    role user_role NOT NULL,
     reimbursement_amount DECIMAL(20, 2) NOT NULL,
     description TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,

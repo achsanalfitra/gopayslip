@@ -13,7 +13,6 @@ type Reimbursement struct {
 	UpdatedBy           int64     `json:"updated_by"`
 	ReimbursementAmount float64   `json:"reimbursement_amount"`
 	RequestId           uuid.UUID `json:"request_id"`
-	UserRole            Role      `json:"user_role"`
 	Description         string    `json:"description"`
 	CreatedAt           time.Time `json:"created_at"`
 	UpdatedAt           time.Time `json:"updated_at"`
