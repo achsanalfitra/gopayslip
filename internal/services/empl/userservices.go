@@ -14,7 +14,8 @@ import (
 
 type User interface {
 	CheckIn(userID int64, requestID uuid.UUID, ctx context.Context) error
-	ProposeOvertime()
+	ProposeOvertime(userID int64, requestID uuid.UUID, overtimeDuration time.Duration, overtimeDate time.Time, ctx context.Context) error
+	ProposeReimbursement(userID int64, requestID uuid.UUID, amount float64, desc string, ctx context.Context) error
 }
 
 func CheckIn(userID int64, requestID uuid.UUID, ctx context.Context) error {
@@ -177,5 +178,4 @@ func ProposeReimbursement(userID int64, requestID uuid.UUID, amount float64, des
 	}
 
 	return nil
-
 }

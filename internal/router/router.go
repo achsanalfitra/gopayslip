@@ -13,6 +13,11 @@ var publicPath = map[string]bool{
 	"/api/": true,
 }
 
+const (
+	CtxRequestKey = "request-key"
+	CtxUserKey    = "user-key"
+)
+
 type Router struct {
 	Route     map[string]map[string]http.HandlerFunc // format -> path: {method: http.HandlerFunc}
 	Tokenizer *auth.Tokenizer
