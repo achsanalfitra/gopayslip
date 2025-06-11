@@ -154,6 +154,15 @@ func (t *Tokenizer) ReadToken(req *http.Request) (string, error) {
 	return access, nil
 }
 
+func (t *Tokenizer) GetUserFromAccess(access string) (string, error) {
+	user, ok := t.accessToUser[access]
+	if !ok {
+		return "", errors.New("invalid token")
+	}
+
+	return user, nil
+}
+
 // helper for GenerateToken
 func (t *Tokenizer) generateRandomBytes(n int) ([]byte, error) {
 	b := make([]byte, n)

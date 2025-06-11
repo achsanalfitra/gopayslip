@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -45,11 +46,11 @@ type AuthHandler struct {
 	App         *app.App
 }
 
-func NewAuthHandler(svc AuthService, a *app.App) *AuthHandler {
+func NewAuthHandler(a *app.App, svc AuthService) *AuthHandler {
 	return &AuthHandler{
-		AuthService: svc,
 		Tokenizer:   NewTokenizer(),
 		App:         a,
+		AuthService: svc,
 	}
 }
 
@@ -135,4 +136,23 @@ func (ah *AuthHandler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(RegisterResponse{Message: message})
+}
+
+func (ah *AuthHandler) UserIDFromToken(user string) (int64, error) {
+	db := ah.App.DB
+	if db == nil {
+		return 0, errors.New("database connection not available")
+	}
+
+	var userID int64
+	query := `SELECT id FROM users WHERE username = $1`
+	err := db.QueryRow(query, user).Scan(&userID)
+	if err == sql.ErrNoRows {
+		return 0, errors.New("user not found")
+	}
+	if err != nil {
+		return 0, fmt.Errorf("failed to query user ID: %w", err)
+	}
+
+	return userID, nil
 }

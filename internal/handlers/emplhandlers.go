@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -38,6 +39,12 @@ func NewEmplHandler(emplSvc empl.Empl, userSvc empl.User, a *app.App) *EmplHandl
 }
 
 func (e *EmplHandler) AttendanceHandler(w http.ResponseWriter, r *http.Request) {
+	// inject DB
+	newCtx := context.WithValue(r.Context(), app.PQ, e.App.DB)
+
+	// update context with injected DB
+	r = r.WithContext(newCtx)
+
 	userIDStr, ok := r.Context().Value(router.CtxUserKey).(string)
 	if !ok {
 		http.Error(w, "User ID not found in context or invalid type", http.StatusInternalServerError)
@@ -67,6 +74,12 @@ func (e *EmplHandler) AttendanceHandler(w http.ResponseWriter, r *http.Request) 
 }
 
 func (e *EmplHandler) OvertimeHandler(w http.ResponseWriter, r *http.Request) {
+	// inject DB
+	newCtx := context.WithValue(r.Context(), app.PQ, e.App.DB)
+
+	// update context with injected DB
+	r = r.WithContext(newCtx)
+
 	userIDStr, ok := r.Context().Value(router.CtxUserKey).(string)
 	if !ok {
 		http.Error(w, "User ID not found in context or invalid type", http.StatusInternalServerError)
@@ -109,6 +122,12 @@ func (e *EmplHandler) OvertimeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (e *EmplHandler) ReimbursementHandler(w http.ResponseWriter, r *http.Request) {
+	// inject DB
+	newCtx := context.WithValue(r.Context(), app.PQ, e.App.DB)
+
+	// update context with injected DB
+	r = r.WithContext(newCtx)
+
 	userIDStr, ok := r.Context().Value(router.CtxUserKey).(string)
 	if !ok {
 		http.Error(w, "User ID not found in context or invalid type", http.StatusInternalServerError)
@@ -143,6 +162,12 @@ func (e *EmplHandler) ReimbursementHandler(w http.ResponseWriter, r *http.Reques
 }
 
 func (e *EmplHandler) PayslipHandler(w http.ResponseWriter, r *http.Request) {
+	// inject DB
+	newCtx := context.WithValue(r.Context(), app.PQ, e.App.DB)
+
+	// update context with injected DB
+	r = r.WithContext(newCtx)
+
 	userIDStr, ok := r.Context().Value(router.CtxUserKey).(string)
 	if !ok {
 		http.Error(w, "User ID not found in context or invalid type", http.StatusInternalServerError)

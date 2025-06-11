@@ -17,7 +17,13 @@ type AuthService interface {
 	Register(user, pass, role string, salary float64, ctx context.Context) error
 }
 
-func Login(user, pass, role string, ctx context.Context) error {
+type authServiceImpl struct{}
+
+func NewAuthService() AuthService {
+	return &authServiceImpl{}
+}
+
+func (s *authServiceImpl) Login(user, pass, role string, ctx context.Context) error {
 	var hashedPassword string
 
 	// connect to database
@@ -41,7 +47,7 @@ func Login(user, pass, role string, ctx context.Context) error {
 	return nil
 }
 
-func Register(user, pass, role string, salary float64, ctx context.Context) error {
+func (s *authServiceImpl) Register(user, pass, role string, salary float64, ctx context.Context) error {
 	// connect to database
 	db, err := hlp.GetDB(ctx, app.PQ)
 	if err != nil {
