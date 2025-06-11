@@ -16,6 +16,8 @@ var publicPath = map[string]bool{
 const (
 	CtxRequestKey = "request-key"
 	CtxUserKey    = "user-key"
+	CtxStartKey   = "start-date"
+	CtxEndKey     = "end-date"
 )
 
 type Router struct {

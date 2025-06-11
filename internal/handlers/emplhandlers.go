@@ -141,3 +141,37 @@ func (e *EmplHandler) ReimbursementHandler(w http.ResponseWriter, r *http.Reques
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"message": "Reimbursement proposal successful", "request_id": requestID.String()})
 }
+
+func (e *EmplHandler) PayslipHandler(w http.ResponseWriter, r *http.Request) {
+	userIDStr, ok := r.Context().Value(router.CtxUserKey).(string)
+	if !ok {
+		http.Error(w, "User ID not found in context or invalid type", http.StatusInternalServerError)
+		return
+	}
+	userID, err := strconv.ParseInt(userIDStr, 10, 64)
+	if err != nil {
+		http.Error(w, "Invalid user ID format in context", http.StatusInternalServerError)
+		return
+	}
+
+	start, ok := r.Context().Value(router.CtxStartKey).(time.Time)
+	if !ok {
+		http.Error(w, "Start date not found in context or invalid type", http.StatusInternalServerError)
+		return
+	}
+
+	end, ok := r.Context().Value(router.CtxEndKey).(time.Time)
+	if !ok {
+		http.Error(w, "End date not found in context or invalid type", http.StatusInternalServerError)
+		return
+	}
+
+	payslip, err := e.EmplService.GeneratePayslip(userID, r.Context(), start, end)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to generate payslip: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(payslip)
+}
