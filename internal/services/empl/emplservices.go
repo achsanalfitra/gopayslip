@@ -14,6 +14,12 @@ type Empl interface {
 	GeneratePayslip(userID int64, ctx context.Context, start, end time.Time) (Payslip, error)
 }
 
+type emplImplementation struct{}
+
+func NewEmplServices() Empl {
+	return &emplImplementation{}
+}
+
 // define payslip for easier payload distribution
 type Payslip struct {
 	UserID           int64
@@ -29,29 +35,29 @@ type Payslip struct {
 	PayrollEnd       time.Time
 }
 
-func GeneratePayslip(userID int64, ctx context.Context, start, end time.Time) (Payslip, error) {
+func (e *emplImplementation) GeneratePayslip(userID int64, ctx context.Context, start, end time.Time) (Payslip, error) {
 	db, err := hlp.GetDB(ctx, app.PQ)
 	if err != nil {
 		return Payslip{}, err
 	}
 
 	// implement the private functions
-	attendance, totalWorkingDays, err := countAttendance(userID, db, ctx, start, end)
+	attendance, totalWorkingDays, err := e.countAttendance(userID, db, ctx, start, end)
 	if err != nil {
 		return Payslip{}, errors.New("failed to count attendance")
 	}
 
-	totalReimb, err := totalReimbursement(userID, db, ctx, start, end)
+	totalReimb, err := e.totalReimbursement(userID, db, ctx, start, end)
 	if err != nil {
 		return Payslip{}, errors.New("failed to get total reimbursement")
 	}
 
-	overtimeHrs, err := overtimeDuration(userID, db, ctx, start, end)
+	overtimeHrs, err := e.overtimeDuration(userID, db, ctx, start, end)
 	if err != nil {
 		return Payslip{}, errors.New("failed to get overtime duration")
 	}
 
-	baseSalary, err := getUserSalary(userID, db, ctx)
+	baseSalary, err := e.getUserSalary(userID, db, ctx)
 	if err != nil {
 		return Payslip{}, errors.New("failed to get user salary")
 	}
@@ -86,7 +92,7 @@ func GeneratePayslip(userID int64, ctx context.Context, start, end time.Time) (P
 	return payslip, nil
 }
 
-func getUserSalary(userID int64, db *sql.DB, ctx context.Context) (salary float64, err error) {
+func (e *emplImplementation) getUserSalary(userID int64, db *sql.DB, ctx context.Context) (salary float64, err error) {
 	query := `SELECT salary FROM users WHERE id = $1`
 	err = db.QueryRowContext(ctx, query, userID).Scan(&salary)
 	if err == sql.ErrNoRows {
@@ -98,7 +104,7 @@ func getUserSalary(userID int64, db *sql.DB, ctx context.Context) (salary float6
 	return salary, nil
 }
 
-func countAttendance(userID int64, db *sql.DB, ctx context.Context, start, end time.Time) (attendance int, totalWorkingDays int, err error) {
+func (e *emplImplementation) countAttendance(userID int64, db *sql.DB, ctx context.Context, start, end time.Time) (attendance int, totalWorkingDays int, err error) {
 	query := `SELECT COUNT(*) FROM attendance WHERE user_id = $1 AND created_at BETWEEN $2 AND $3`
 	err = db.QueryRowContext(ctx, query, userID, start, end).Scan(&attendance)
 	if err != nil {
@@ -116,7 +122,7 @@ func countAttendance(userID int64, db *sql.DB, ctx context.Context, start, end t
 	return attendance, totalWorkingDays, nil
 }
 
-func totalReimbursement(userID int64, db *sql.DB, ctx context.Context, start, end time.Time) (total float64, err error) {
+func (e *emplImplementation) totalReimbursement(userID int64, db *sql.DB, ctx context.Context, start, end time.Time) (total float64, err error) {
 	query := `SELECT COALESCE(SUM(reimbursement_amount), 0) FROM reimbursement WHERE user_id = $1 AND created_at BETWEEN $2 AND $3`
 	err = db.QueryRowContext(ctx, query, userID, start, end).Scan(&total)
 	if err != nil {
@@ -125,7 +131,7 @@ func totalReimbursement(userID int64, db *sql.DB, ctx context.Context, start, en
 	return total, nil
 }
 
-func overtimeDuration(userID int64, db *sql.DB, ctx context.Context, start, end time.Time) (totalHours float64, err error) {
+func (e *emplImplementation) overtimeDuration(userID int64, db *sql.DB, ctx context.Context, start, end time.Time) (totalHours float64, err error) {
 	query := `SELECT COALESCE(SUM(overtime_duration), 0) FROM overtime WHERE employee_id = $1 AND created_at BETWEEN $2 AND $3`
 	err = db.QueryRowContext(ctx, query, userID, start, end).Scan(&totalHours)
 	if err != nil {

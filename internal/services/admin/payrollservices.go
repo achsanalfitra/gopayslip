@@ -20,7 +20,16 @@ type Admin interface {
 	RunPayroll(ctx context.Context) (end time.Time, err error)
 }
 
-func DefinePayroll(userID int64, start, end time.Time, ctx context.Context) error {
+type adminSvcImpl struct{}
+
+func NewAdminServices() Admin {
+	return &adminSvcImpl{}
+}
+
+// get the service
+var emplServices = empl.NewEmplServices()
+
+func (a *adminSvcImpl) DefinePayroll(userID int64, start, end time.Time, ctx context.Context) error {
 	db, err := hlp.GetDB(ctx, app.PQ)
 	if err != nil {
 		return err
@@ -89,7 +98,7 @@ func DefinePayroll(userID int64, start, end time.Time, ctx context.Context) erro
 }
 
 // run payroll
-func RunPayroll(ctx context.Context) (end time.Time, err error) {
+func (a *adminSvcImpl) RunPayroll(ctx context.Context) (end time.Time, err error) {
 	db, err := hlp.GetDB(ctx, app.PQ)
 	if err != nil {
 		return time.Time{}, err
@@ -120,7 +129,7 @@ func RunPayroll(ctx context.Context) (end time.Time, err error) {
 	return latestUnrunPayroll.EndPeriod, nil
 }
 
-func GeneratePayrollSummary(ctx context.Context, start, end time.Time) (PayslipList map[string]float64, Total float64, err error) {
+func (a *adminSvcImpl) GeneratePayrollSummary(ctx context.Context, start, end time.Time) (PayslipList map[string]float64, Total float64, err error) {
 	db, err := hlp.GetDB(ctx, app.PQ)
 	if err != nil {
 		return make(map[string]float64), 0, err
@@ -144,7 +153,7 @@ func GeneratePayrollSummary(ctx context.Context, start, end time.Time) (PayslipL
 			return make(map[string]float64), 0, fmt.Errorf("failed to scan user ID: %w", err)
 		}
 
-		payslip, err := empl.GeneratePayslip(userID, ctx, start, end)
+		payslip, err := emplServices.GeneratePayslip(userID, ctx, start, end)
 		if err != nil {
 			log.Printf("failed to generate payslip for user %d: %v", userID, err)
 			continue
