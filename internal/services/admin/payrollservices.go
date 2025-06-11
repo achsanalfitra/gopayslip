@@ -81,3 +81,35 @@ func DefinePayroll(userID int64, start, end time.Time, ctx context.Context) erro
 
 	return nil
 }
+
+// run payroll
+func RunPayroll(ctx context.Context) (end time.Time, err error) {
+	db, err := hlp.GetDB(ctx, app.PQ)
+	if err != nil {
+		return err
+	}
+
+	// find the latest payroll where statis is_run is false, if not found return error
+	var latestUnrunPayroll model.Payroll
+	query := `SELECT id, end_period FROM payrolls WHERE is_run = FALSE ORDER BY end_period ASC LIMIT 1`
+	err = db.QueryRowContext(ctx, query).Scan(
+		&latestUnrunPayroll.ID,
+		&latestUnrunPayroll.EndPeriod,
+	)
+
+	if err == sql.ErrNoRows {
+		return time.Time{}, errors.New("no pending payroll to run")
+	}
+	if err != nil {
+		return time.Time{}, errors.New("failed to run payroll")
+	}
+
+	// insert
+	updateQuery := `UPDATE payrolls SET is_run = TRUE, updated_at = $1 WHERE id = $2`
+	_, err = db.ExecContext(ctx, updateQuery, time.Now(), latestUnrunPayroll.ID)
+	if err != nil {
+		return time.Time{}, errors.New("failed to update payroll status")
+	}
+
+	return latestUnrunPayroll.EndPeriod, nil
+}

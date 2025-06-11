@@ -19,21 +19,24 @@ var (
 )
 
 type AppConfig struct {
-	DB     *sql.DB
-	Server *config.Server
+	DB         *sql.DB
+	Server     *config.Server
+	InitStates map[string]any
 }
 
 // create App for dependency injection
 type App struct {
-	DB     *sql.DB
-	Server *config.Server
+	DB         *sql.DB
+	Server     *config.Server
+	InitStates map[string]any // data init
 	// declare other app-dependencies here
 }
 
 func NewApp(cfg AppConfig) *App {
 	return &App{
-		DB:     cfg.DB,
-		Server: cfg.Server,
+		DB:         cfg.DB,
+		Server:     cfg.Server,
+		InitStates: make(map[string]any),
 		// don't forget to instantiate them
 	}
 }
